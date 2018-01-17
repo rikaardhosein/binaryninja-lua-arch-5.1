@@ -41,7 +41,7 @@ opcodes = {
     34: 'SETLIST',  #Set a range of array elements for a table
     35: 'CLOSE',  #Close a range of locals being used as upvalues
     36: 'CLOSURE',  #Create a closure of a function prototype
-    37: 'VARARG'  #Assign vararg function arguments to registers        
+    37: 'VARARG'  #Assign vararg function arguments to registers
 }
 
 #instruction_types
@@ -111,23 +111,43 @@ def get_opcode(b):
 
 #Returns instruction, size, operands
 class LuaBytecode(Architecture):
-    name = 'LuaBytecode'
+    name = 'luabytecodearch'
     opcode_display_length = 10
     instruction_length = 4
+    max_instruction_length = 4
+    default_int_size = 4
 
     def decode_instruction(self, data, addr):
-        if len(data) < instruction_length:
+        if len(data) < self.instruction_length:
             return None, None, None
 
-        instruction_bytes = unpack('<L', data[0:instruction_length])
+        instruction_bytes = unpack('<L', data[0:self.instruction_length])[0]
         opcode = get_opcode(instruction_bytes)
         assert (opcode >= 0 and opcode <= 37), 'Invalid opcode @ %x' % addr
+        opcode = opcodes[opcode]
+        print "Opcode: %s" % opcode
 
         #Need to get operands now
         operand_type = operand_types[opcode]
         operands = operand_decode_func[operand_type](instruction_bytes)
 
-        return opcode, instruction_length, operands
+        return opcode, self.instruction_length, operands
+
+    def perform_get_instruction_info(self, data, addr):
+        instruction, length, operands = self.decode_instruction(data, addr)
+
+        result = InstructionInfo()
+
+        result.length = length
+
+        if instruction == 'CALL':
+            result.add_branch(BranchType.CallDestination, 0)
+        elif instruction == 'JMP':
+            result.add(BranchType.UnconditionalBranch, addr + operands[0])
+        elif instruction == 'RETURN':
+            result.add(BranchType.FunctionReturn, 0)
+
+        return result
 
     def perform_get_instruction_text(self, data, addr):
         instruction, length, operands = self.decode_instruction(data, addr)
@@ -152,6 +172,7 @@ class LuaBytecode(Architecture):
                 InstructionTextToken(IntegerToken, '%d' % operand, operand))
             first_iteration = False
 
+        print tokens
         return tokens, length
 
     def perform_get_instruction_low_level_il(self, data, addr, il):
