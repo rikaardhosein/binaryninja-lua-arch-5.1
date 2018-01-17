@@ -151,7 +151,7 @@ class LuaBytecode(Architecture):
         if instruction == 'CALL':
             result.add_branch(BranchType.CallDestination, 0)
         elif instruction == 'JMP':
-            result.add_branch(BranchType.UnconditionalBranch, addr + operands[0])
+            result.add_branch(BranchType.UnconditionalBranch, addr + operands[0]*4)
         elif instruction == 'RETURN':
             result.add_branch(BranchType.FunctionReturn, 0)
 
