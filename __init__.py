@@ -158,4 +158,4 @@ class LuaBytecode(Architecture):
         return None
 
 
-LuaBytecode.Register()
+LuaBytecode.register()
