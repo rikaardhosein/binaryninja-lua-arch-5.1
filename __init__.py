@@ -41,7 +41,7 @@ opcodes = {
     34: 'SETLIST',  #Set a range of array elements for a table
     35: 'CLOSE',  #Close a range of locals being used as upvalues
     36: 'CLOSURE',  #Create a closure of a function prototype
-    37: 'VARARG'  #Assign vararg function arguments to registers        
+    37: 'VARARG'  #Assign vararg function arguments to registers
 }
 
 #instruction_types
@@ -53,14 +53,22 @@ iABx = 3
 iAsBx = 4
 isBx = 6
 
+
+def get_var(s, l, data):
+    val = 0L
+    mask = long((2**l) - 1) << s
+    val = ((data & mask) >> s)
+    return val
+
+
 operand_decode_func = {
-    iABC: lambda x: (x & 0x3fc0, x & 0xff800000, x & 0x7fc000),
-    iA: lambda x: (x & 0x3fc0),
-    iAB: lambda x: (x & 0x3fc0, x & 0xff800000),
-    iAC: lambda x: (x & 0x3fc0, x & 0x7fc000),
-    iABx: lambda x: (x & 0x3fc0, x & 0xffffc000),
-    iAsBx: lambda x: (x & 0x3fc0, (x & 0xffffc000) - 131071),
-    isBx: lambda x: ((x & 0xffffc000) - 131071, )
+    iABC: lambda x: (get_var(6, 8, x), get_var(23, 9, x), get_var(14, 9, x)),
+    iA: lambda x: (get_var(6, 8, x)),
+    iAB: lambda x: (get_var(6, 8, x), get_var(23, 9, x)),
+    iAC: lambda x: (get_var(6, 8, x), get_var(14, 9, x)),
+    iABx: lambda x: (get_var(6, 8, x), get_var(14, 18, x)),
+    iAsBx: lambda x: (get_var(6, 8, x), (get_var(14, 18, x)) - 131071),
+    isBx: lambda x: ((get_var(14, 18, x)) - 131071, )
 }
 
 operand_types = {
